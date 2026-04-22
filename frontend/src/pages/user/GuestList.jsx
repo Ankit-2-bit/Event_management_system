@@ -24,30 +24,20 @@ function GuestList() {
 
 	useEffect(() => {
 		let ignore = false
-
 		const loadInitialGuests = async () => {
 			try {
 				const { data } = await apiClient.get('/user/guests')
-				if (!ignore) {
-					setGuests(data.data)
-				}
+				if (!ignore) setGuests(data.data)
 			} catch {
-				if (!ignore) {
-					setError('Unable to fetch guest list.')
-				}
+				if (!ignore) setError('Unable to fetch guest list.')
 			}
 		}
-
 		loadInitialGuests()
-
-		return () => {
-			ignore = true
-		}
+		return () => { ignore = true }
 	}, [])
 
 	const handleSubmit = async (event) => {
 		event.preventDefault()
-
 		try {
 			await apiClient.post('/user/guests', guest)
 			setGuest(defaultGuest)
@@ -66,77 +56,116 @@ function GuestList() {
 		}
 	}
 
+	const inputClass = "w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none placeholder:text-slate-400";
+	const labelClass = "block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5";
+
 	return (
 		<PageShell
-			title="Guest List"
+			title="Guest List Management"
 			links={[
 				{ to: '/user/vendors', label: 'Vendor' },
 				{ to: '/user/cart', label: 'Cart' },
 				{ to: '/user/order-status', label: 'Order Status' },
 			]}
 		>
-			<section className="grid gap-5 lg:grid-cols-[360px_1fr]">
-				<form onSubmit={handleSubmit} className="space-y-3 rounded-md border border-slate-300 bg-white p-4">
-					<h2 className="text-lg font-semibold text-slate-800">Add Guest</h2>
-
-					<input
-						value={guest.name}
-						onChange={(event) => setGuest((prev) => ({ ...prev, name: event.target.value }))}
-						className="w-full rounded-md border border-blue-300 bg-blue-100 px-3 py-2"
-						placeholder="Name"
-						required
-					/>
-
-					<input
-						type="email"
-						value={guest.email}
-						onChange={(event) => setGuest((prev) => ({ ...prev, email: event.target.value }))}
-						className="w-full rounded-md border border-blue-300 bg-blue-100 px-3 py-2"
-						placeholder="Email"
-					/>
-
-					<input
-						value={guest.phone}
-						onChange={(event) => setGuest((prev) => ({ ...prev, phone: event.target.value }))}
-						className="w-full rounded-md border border-blue-300 bg-blue-100 px-3 py-2"
-						placeholder="Phone"
-					/>
-
-					<button type="submit" className="rounded-md bg-blue-600 px-4 py-2 font-semibold text-white">
-						Add Guest
-					</button>
-				</form>
-
-				<div className="space-y-3">
-					{error && <p className="rounded-md bg-red-100 px-3 py-2 text-sm text-red-700">{error}</p>}
-
-					{guests.map((item) => (
-						<article key={item._id} className="rounded-md border border-slate-300 bg-white p-4">
-							<div className="flex flex-wrap items-center justify-between gap-3">
-								<div>
-									<h3 className="font-semibold text-slate-800">{item.name}</h3>
-									<p className="text-sm text-slate-600">{item.email || 'No email provided'}</p>
-									<p className="text-sm text-slate-600">{item.phone || 'No phone provided'}</p>
-								</div>
-
-								<button
-									type="button"
-									onClick={() => handleDelete(item._id)}
-									className="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white"
-								>
-									Delete
-								</button>
+			<div className="max-w-6xl mx-auto">
+				<section className="grid gap-8 lg:grid-cols-12 items-start">
+					
+					{/* Add Guest Form */}
+					<div className="lg:col-span-4 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+						<div className="bg-slate-50 border-b border-slate-200 p-4">
+							<h2 className="font-bold text-slate-800 uppercase tracking-tight">Add New Guest</h2>
+						</div>
+						<form onSubmit={handleSubmit} className="p-5 space-y-4">
+							<div>
+								<label className={labelClass}>Full Name</label>
+								<input
+									value={guest.name}
+									onChange={(e) => setGuest((p) => ({ ...p, name: e.target.value }))}
+									className={inputClass}
+									placeholder="e.g. Jane Smith"
+									required
+								/>
 							</div>
-						</article>
-					))}
 
-					{guests.length === 0 && (
-						<p className="rounded-md border border-slate-300 bg-white px-3 py-4 text-sm text-slate-500">
-							No guests added yet.
-						</p>
-					)}
-				</div>
-			</section>
+							<div>
+								<label className={labelClass}>Email Address</label>
+								<input
+									type="email"
+									value={guest.email}
+									onChange={(e) => setGuest((p) => ({ ...p, email: e.target.value }))}
+									className={inputClass}
+									placeholder="jane@example.com"
+								/>
+							</div>
+
+							<div>
+								<label className={labelClass}>Phone Number</label>
+								<input
+									value={guest.phone}
+									onChange={(e) => setGuest((p) => ({ ...p, phone: e.target.value }))}
+									className={inputClass}
+									placeholder="+1 (555) 000-0000"
+								/>
+							</div>
+
+							<button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg transition-all shadow-sm active:scale-[0.98]">
+								Add to List
+							</button>
+						</form>
+					</div>
+
+					{/* Guests List Area */}
+					<div className="lg:col-span-8 space-y-4">
+						<div className="flex items-center justify-between px-2">
+							<h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Confirmed Guests ({guests.length})</h2>
+							{error && <span className="text-xs font-medium text-red-500 bg-red-50 px-3 py-1 rounded-full border border-red-100">⚠️ {error}</span>}
+						</div>
+
+						<div className="grid gap-3">
+							{guests.map((item) => (
+								<article key={item._id} className="group bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-indigo-200 transition-all flex items-center justify-between">
+									<div className="flex items-center gap-4">
+										<div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-sm uppercase">
+											{item.name.charAt(0)}
+										</div>
+										<div>
+											<h3 className="font-bold text-slate-900 leading-tight">{item.name}</h3>
+											<div className="flex gap-4 mt-0.5">
+												{item.email && (
+													<span className="text-xs text-slate-500 flex items-center gap-1">
+														📧 {item.email}
+													</span>
+												)}
+												{item.phone && (
+													<span className="text-xs text-slate-500 flex items-center gap-1">
+														📞 {item.phone}
+													</span>
+												)}
+											</div>
+										</div>
+									</div>
+
+									<button
+										type="button"
+										onClick={() => handleDelete(item._id)}
+										className="opacity-0 group-hover:opacity-100 transition-opacity bg-red-50 hover:bg-red-600 hover:text-white text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-100"
+									>
+										Remove
+									</button>
+								</article>
+							))}
+
+							{guests.length === 0 && (
+								<div className="text-center py-16 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+									<div className="text-3xl mb-2">👥</div>
+									<p className="text-slate-400 text-sm font-medium">Your guest list is currently empty.</p>
+								</div>
+							)}
+						</div>
+					</div>
+				</section>
+			</div>
 		</PageShell>
 	)
 }
